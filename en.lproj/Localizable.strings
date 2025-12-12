@@ -1,0 +1,38 @@
+/* 
+  Localizable.strings
+  HabitTracker
+
+  Created by Timur Mamedov on 6.11.2025.
+  
+*/
+"Category" = "Category";
+"Schedule" = "Schedule";
+"Filters" = "Filters";
+"Statistics" = "Statistics";
+"Trackers" = "Trackers";
+"What do you want to track?" = "What do you want to track?";
+"New habit" = "New habit";
+"Cancel" = "Cancel";
+"Create" = "Create";
+"Type tracker's name" = "Type tracker's name";
+"Category" = "Category";
+"Add Category" = "Add Category";
+"Habits and events can be grouped together by meaning" = "Habits and events can be grouped together by meaning";
+"Schedule" = "Schedule";
+"Done" = "Done";
+
+"Mon" = "Mon";
+"Tue" = "Tue";
+"Wed" = "Wed";
+"Thu" = "Thu";
+"Fri" = "Fri";
+"Sat" = "Sat";
+"Sun" = "Sun";
+
+"Monday" = "Monday";
+"Tuesday" = "Tuesday";
+"Wednesday" = "Wednesday";
+"Thursday" = "Thursday";
+"Friday" = "Friday";
+"Saturday" = "Saturday";
+"Sunday" = "Sunday";
