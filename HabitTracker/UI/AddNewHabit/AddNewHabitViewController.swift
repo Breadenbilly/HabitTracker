@@ -11,9 +11,11 @@ import SnapKit
 
 final class AddNewHabitViewController: UIViewController {
     
-    private let addNewHabitViewPresenter: AddNewHabitViewPresenter
+    private let addNewHabitViewModel = AddNewHabitViewModel()
     
     private var selectedDays: [Weekday] = []
+    
+    private var selectedCategory: CategoryVM?
     
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -52,17 +54,35 @@ final class AddNewHabitViewController: UIViewController {
         return label
     }()
     
+    private lazy var categoryValueLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 17, weight: .regular)
+        label.textColor = .grayFontTextEditor
+        label.textAlignment = .right
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
+        return label
+    }()
+    
+    private lazy var categoryVerticalStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.spacing = 4
+        stackView.distribution = .fillEqually
+        stackView.alignment = .leading
+        return stackView
+    }()
+    
     private lazy var categoryImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFit
+        imageView.contentMode = .center
         imageView.clipsToBounds = true
         imageView.image = UIImage(systemName: "chevron.right")
-        imageView.tintColor = .label
-        
+        imageView.tintColor = .grayFontTextEditor
         return imageView
     }()
     
-    private lazy var categoryStackView: UIStackView = {
+    private lazy var categoryFinalStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.spacing = 16
@@ -84,7 +104,7 @@ final class AddNewHabitViewController: UIViewController {
     private lazy var scheduleValueLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 17, weight: .regular)
-        label.textColor = .secondaryLabel
+        label.textColor = .grayFontTextEditor
         label.textAlignment = .right
         label.setContentHuggingPriority(.required, for: .horizontal)
         label.setContentCompressionResistancePriority(.required, for: .horizontal)
@@ -102,10 +122,10 @@ final class AddNewHabitViewController: UIViewController {
     
     private lazy var scheduleImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFit
+        imageView.contentMode = .center
         imageView.clipsToBounds = true
         imageView.image = UIImage(systemName: "chevron.right")
-        imageView.tintColor = .label
+        imageView.tintColor = .grayFontTextEditor
         return imageView
     }()
     
@@ -154,8 +174,7 @@ final class AddNewHabitViewController: UIViewController {
     }()
     
     // MARK: - Init
-    init(presenter: AddNewHabitViewPresenter) {
-        self.addNewHabitViewPresenter = presenter
+    init() {
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -173,12 +192,13 @@ final class AddNewHabitViewController: UIViewController {
         setupConstraints()
         setupGestures()
         updateScheduleLabel()
+        updateCategoryLabel()
     }
     
     private func setupGestures() {
-        categoryStackView.isUserInteractionEnabled = true
+        categoryFinalStackView.isUserInteractionEnabled = true
         let categoryTap = UITapGestureRecognizer(target: self, action: #selector(categoryTapped))
-        categoryStackView.addGestureRecognizer(categoryTap)
+        categoryFinalStackView.addGestureRecognizer(categoryTap)
         
         scheduleLabelStackView.isUserInteractionEnabled = true
         let scheduleTap = UITapGestureRecognizer(target: self, action: #selector(scheduleTapped))
@@ -186,9 +206,13 @@ final class AddNewHabitViewController: UIViewController {
     }
     
     @objc private func categoryTapped() {
-        let presenter = CategorySelectionViewPresenter()
-        let vc = CategorySelectionViewController(presenter: presenter)
-        presenter.viewController = vc
+        let vc = CategorySelectionViewController()
+
+        vc.onCategoryPicked = { [weak self] category in
+            self?.selectedCategory = category
+            self?.updateCategoryLabel()
+        }
+
         navigationController?.pushViewController(vc, animated: true)
     }
     
@@ -236,10 +260,17 @@ final class AddNewHabitViewController: UIViewController {
             make.height.equalTo(150)
         }
         
-        categoryStackView.addArrangedSubview(categoryLabel)
-        categoryStackView.addArrangedSubview(categoryImageView)
+        categoryVerticalStackView.addArrangedSubview(categoryLabel)
+        categoryVerticalStackView.addArrangedSubview(categoryValueLabel)
+        categoryFinalStackView.addArrangedSubview(categoryVerticalStackView)
+        categoryFinalStackView.addArrangedSubview(categoryImageView)
+        
         categoryImageView.snp.makeConstraints { make in
             make.width.height.equalTo(24)
+        }
+        
+        categoryValueLabel.snp.makeConstraints { make in
+            make.top.equalTo(categoryLabel).offset(24)
         }
         
         scheduleLabelStackView.addArrangedSubview(scheduleLabel)
@@ -247,7 +278,15 @@ final class AddNewHabitViewController: UIViewController {
         scheduleFinalStackView.addArrangedSubview(scheduleLabelStackView)
         scheduleFinalStackView.addArrangedSubview(scheduleImageView)
         
-        finalStackView.addArrangedSubview(categoryStackView)
+        scheduleImageView.snp.makeConstraints { make in
+            make.width.height.equalTo(24)
+        }
+        
+        scheduleValueLabel.snp.makeConstraints { make in
+            make.top.equalTo(scheduleLabel).offset(24)
+        }
+        
+        finalStackView.addArrangedSubview(categoryFinalStackView)
         finalStackView.addArrangedSubview(scheduleFinalStackView)
         finalStackView.addSubview(separator)
         ///убрать аррэйндж сабвю
@@ -259,14 +298,6 @@ final class AddNewHabitViewController: UIViewController {
         ///
         ///
         ///
-        scheduleImageView.snp.makeConstraints { make in
-            make.width.height.equalTo(24)
-        }
-        
-        scheduleValueLabel.snp.makeConstraints { make in
-            make.top.equalTo(scheduleLabel).offset(24)
-        }
-        
         separator.snp.makeConstraints { make in
             make.centerY.equalTo(finalStackView)
             make.height.equalTo(1)
@@ -290,8 +321,8 @@ final class AddNewHabitViewController: UIViewController {
             make.height.equalTo(60)
         }
         
-        
     }
+    
     private  func updateScheduleLabel() {
         if selectedDays.isEmpty {
             scheduleValueLabel.text = nil
@@ -305,5 +336,10 @@ final class AddNewHabitViewController: UIViewController {
             scheduleValueLabel.text = text
             scheduleLabelStackView.insertArrangedSubview(scheduleValueLabel, at: 1)
             scheduleValueLabel.isHidden = false        }
+    }
+    
+    private func updateCategoryLabel() {
+        categoryValueLabel.text = selectedCategory?.title
+        categoryValueLabel.isHidden = (selectedCategory == nil)
     }
 }

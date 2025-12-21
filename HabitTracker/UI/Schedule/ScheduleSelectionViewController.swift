@@ -7,7 +7,7 @@ final class ScheduleSelectionViewController: UIViewController {
     
     var onDone: (([Weekday]) -> Void)?
     
-    private let presenter = ScheduleSelectionViewPresenter()
+    private let viewModel = ScheduleSelectionViewModel()
     
     private let days = [
         NSLocalizedString("Monday", comment: ""),
@@ -64,7 +64,6 @@ final class ScheduleSelectionViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        presenter.viewController = self
         view.backgroundColor = .systemBackground
         title = NSLocalizedString("Schedule", comment: "")
         

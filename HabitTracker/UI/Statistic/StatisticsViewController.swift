@@ -9,7 +9,7 @@ import UIKit
 
 final class StatisticsViewController: UIViewController {
     
-    let presenter = StatisticsViewPresenter()
+    let viewModel = StatisticsViewModel()
     
     override func viewDidLoad() {
         super.viewDidLoad()

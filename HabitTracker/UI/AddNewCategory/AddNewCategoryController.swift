@@ -10,6 +10,7 @@ import SnapKit
 
 final class AddNewCategoryController: UIViewController {
     
+    private let viewModel = AddNewCategoryViewModel()
     
     private let containerView: UIView = {
         let view = UIView()
@@ -31,8 +32,9 @@ final class AddNewCategoryController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle(NSLocalizedString("Done", comment: ""), for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = .grayFontTextEditor
         button.layer.cornerRadius = 16
+        button.backgroundColor = .grayFontTextEditor
+        button.isEnabled = false
         return button
     }()
     
@@ -50,6 +52,30 @@ final class AddNewCategoryController: UIViewController {
         super.viewDidLoad()
         title = NSLocalizedString("Add Category", comment: "")
         setupConstraints()
+        view.backgroundColor = .white
+        textView.addTarget(self, action: #selector(textDidChange), for: .editingChanged)
+
+        doneButton.addAction(
+                UIAction { [weak self] _ in
+                    self?.saveCategory()
+                },
+                for: .touchUpInside
+            )
+        
+            updateDoneButtonAppearance()
+    }
+    
+    @objc private func textDidChange() {
+        updateDoneButtonAppearance()
+    }
+    
+    private func updateDoneButtonAppearance() {
+        let isEmpty = (textView.text ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty
+
+        doneButton.backgroundColor = isEmpty ? .grayFontTextEditor : .black
+        doneButton.isEnabled = !isEmpty
     }
     
     func setupConstraints() {
@@ -60,17 +86,38 @@ final class AddNewCategoryController: UIViewController {
         
         containerView.snp.makeConstraints { make in
             make.leading.trailing.equalTo(view).inset(16)
-            make.top.equalTo(view).offset(24)
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(24)
             make.height.equalTo(75)
         }
         
         textView.snp.makeConstraints { make in
-            make.leading.trailing.equalTo(16)
-            make.top.bottom.equalTo(26)
+            make.leading.trailing.equalToSuperview().inset(16)
+            make.centerY.equalToSuperview()
         }
         
-        
+        doneButton.snp.makeConstraints { make in
+            make.bottom.equalTo(view.safeAreaLayoutGuide).inset(16)
+            make.height.equalTo(60)
+            make.leading.trailing.equalTo(view).inset(20)
+        }
     }
     
-    
+    private func saveCategory() {
+        guard
+            let title = textView.text?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+            !title.isEmpty
+        else { return }
+
+        let newCategory = CategoryVM(
+            id: UUID(),
+            title: title
+        )
+
+        let created = CategoryStore.shared.createCategory(newCategory)
+
+        if created {
+            navigationController?.popViewController(animated: true)
+        }
+    }
 }
