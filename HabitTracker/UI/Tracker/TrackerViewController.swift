@@ -11,7 +11,7 @@ final class TrackerViewController: UIViewController, UISearchResultsUpdating, UI
     
     // MARK: - Constants
     
-    var presenter = TrackerViewPresenter()
+    var viewModel = TrackerViewModel()
     
     private enum Constants {
         static let largeTitleFontSize: CGFloat = 34
@@ -151,13 +151,12 @@ final class TrackerViewController: UIViewController, UISearchResultsUpdating, UI
     // MARK: - Actions
     
     @objc private func addNewHabit() {
-        let addNewHabitViewPresenter = AddNewHabitViewPresenter()
-        let addNewHabitViewController = AddNewHabitViewController(presenter: addNewHabitViewPresenter)
-        
-        let navigantionController = UINavigationController(rootViewController: addNewHabitViewController)
-        navigantionController.modalPresentationStyle = .pageSheet
-        
-        present(navigantionController, animated: true)
+        let addNewHabitViewController = AddNewHabitViewController()
+
+        let navigationController = UINavigationController(rootViewController: addNewHabitViewController)
+        navigationController.modalPresentationStyle = .pageSheet
+
+        present(navigationController, animated: true)
     }
     
     // MARK: - Search

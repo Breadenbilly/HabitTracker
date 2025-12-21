@@ -22,7 +22,7 @@ final class CategoryStore: NSObject, NSFetchedResultsControllerDelegate {
         let fetchedResultsController = NSFetchedResultsController(
             fetchRequest: fetchedRequest,
             managedObjectContext: context,
-            sectionNameKeyPath: "category.title",
+            sectionNameKeyPath: nil, // почему??
             cacheName: nil
         )
         fetchedResultsController.delegate = self
@@ -36,21 +36,36 @@ final class CategoryStore: NSObject, NSFetchedResultsControllerDelegate {
     }()
     
     func fetchCategories() -> [CategoryVM] {
-        fetchedResultsController.fetchedObjects
-        return []
+        do {
+            try fetchedResultsController.performFetch()
+        } catch {
+            print("Failed to fetch categories: \(error.localizedDescription)")
+        }
+        
+        guard let objects = fetchedResultsController.fetchedObjects else {
+            return []
+        }
+        
+        return objects.map { categoryCD in
+            CategoryVM(
+                id: categoryCD.id ?? UUID(),
+                title: categoryCD.title ?? ""
+            )
+        }
     }
+    
     
     @discardableResult
     func createCategory(_ vm: CategoryVM) -> Bool {
         let categoryCD = CategoryCD(context: context)
-        categoryCD.title = vm.title
         categoryCD.id = vm.id
+        categoryCD.title = vm.title
         
         do {
             try context.save()
             return true
         } catch {
-            print(error.localizedDescription)
+            print("Failed to save category: \(error.localizedDescription)")
             return false
         }
     }
