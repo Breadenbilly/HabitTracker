@@ -289,15 +289,7 @@ final class AddNewHabitViewController: UIViewController {
         finalStackView.addArrangedSubview(categoryFinalStackView)
         finalStackView.addArrangedSubview(scheduleFinalStackView)
         finalStackView.addSubview(separator)
-        ///убрать аррэйндж сабвю
-        ///
-        ///
-        ///
-        ///
-        ///
-        ///
-        ///
-        ///
+
         separator.snp.makeConstraints { make in
             make.centerY.equalTo(finalStackView)
             make.height.equalTo(1)
