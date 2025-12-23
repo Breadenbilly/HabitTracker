@@ -324,10 +324,12 @@ final class AddNewHabitViewController: UIViewController {
     }
     
     private  func updateScheduleLabel() {
+        
         if selectedDays.isEmpty {
             scheduleValueLabel.text = nil
             scheduleValueLabel.isHidden = true
             scheduleLabelStackView.removeArrangedSubview(scheduleValueLabel)
+            
         } else {
             let text = selectedDays
                 .sorted { $0.rawValue < $1.rawValue }
