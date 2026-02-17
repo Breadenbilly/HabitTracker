@@ -52,26 +52,35 @@ final class TrackerStore: NSObject, NSFetchedResultsControllerDelegate {
     }
     
     func fetchTrackerWithIndexPath(_ indexPath: IndexPath) -> TrackerVM {
-        var trackerCD = fetchedResultsController.object(at: indexPath)
-        var trackerVM = TrackerVM(
+        let trackerCD = fetchedResultsController.object(at: indexPath)
+        let trackerVM = TrackerVM(
             id: Int(trackerCD.id),
             title: trackerCD.title ?? "",
             emoji: trackerCD.emoji ?? "",
-            color: trackerCD.color as? UIColor ?? .grayBackground
+            color: (trackerCD.color ?? "")
         )
         return trackerVM
     }
 
     
     @discardableResult
-    func createTracker(_ vm: TrackerVM) -> Bool {
+    func createTracker(_ vm: TrackerVM, categoryID: UUID) -> Bool {
         let trackerCD = TrackerCD(context: context)
-        trackerCD.id = Int16(vm.id)
+        trackerCD.id = Int32(vm.id)
         trackerCD.title = vm.title
         trackerCD.emoji = vm.emoji
         trackerCD.color = vm.color
         
+        // Найти категорию по ID
+        let fetchRequest: NSFetchRequest<CategoryCD> = CategoryCD.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", categoryID as CVarArg)
+        
         do {
+            let categories = try context.fetch(fetchRequest)
+            if let category = categories.first {
+                trackerCD.category = category
+            }
+            
             try context.save()
             return true
         } catch {

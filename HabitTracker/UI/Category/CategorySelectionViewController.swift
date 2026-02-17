@@ -127,8 +127,6 @@ final class CategorySelectionViewController: UIViewController, UITableViewDelega
         
     }
     
-   
-    
     private func bindViewModel() {
         viewModel.onChange = { [weak self] in
             self?.tableView.reloadData()

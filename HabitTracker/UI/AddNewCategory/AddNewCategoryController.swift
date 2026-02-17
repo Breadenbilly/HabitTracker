@@ -19,7 +19,7 @@ final class AddNewCategoryController: UIViewController {
         view.layer.cornerCurve = .continuous
         return view
     }()
-    
+
     private let textView: UITextField = {
         let textField = UITextField()
         textField.placeholder = NSLocalizedString("Type in catergory name", comment: "")

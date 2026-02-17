@@ -11,5 +11,5 @@ struct TrackerVM: Identifiable {
     var id: Int
     var title: String
     var emoji: String
-    var color: UIColor
+    var color: String
 }
