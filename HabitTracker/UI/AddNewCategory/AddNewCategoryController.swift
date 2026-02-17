@@ -7,7 +7,7 @@
 
 import UIKit
 import SnapKit
-    // Privet, Vasya
+
 final class AddNewCategoryController: UIViewController {
     
     private let viewModel = AddNewCategoryViewModel()

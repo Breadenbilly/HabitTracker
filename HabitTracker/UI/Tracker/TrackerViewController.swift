@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreData
 
 final class TrackerViewController: UIViewController, UISearchResultsUpdating, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
@@ -86,12 +87,7 @@ final class TrackerViewController: UIViewController, UISearchResultsUpdating, UI
             layout.minimumInteritemSpacing = 9
             layout.sectionInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
         }
-        if TrackerStore.shared.trackersCount() > 0 {
-            collectionView.backgroundColor = .white
-        } else {
-            collectionView.backgroundColor = .clear
-            
-        }
+        updateEmptyState()
     }
     
     // MARK: - Setup
@@ -118,7 +114,7 @@ final class TrackerViewController: UIViewController, UISearchResultsUpdating, UI
         )
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: datePicker)
-        NSLayoutConstraint.activate([datePicker.widthAnchor.constraint(lessThanOrEqualToConstant: 100)])
+        NSLayoutConstraint.activate([datePicker.widthAnchor.constraint(lessThanOrEqualToConstant: 120)])
     }
     
     private func setupConstraints() {
@@ -152,6 +148,11 @@ final class TrackerViewController: UIViewController, UISearchResultsUpdating, UI
     
     @objc private func addNewHabit() {
         let addNewHabitViewController = AddNewHabitViewController()
+        
+        addNewHabitViewController.onTrackerCreated = { [weak self] in
+            self?.collectionView.reloadData()
+            self?.updateEmptyState()
+        }
 
         let navigationController = UINavigationController(rootViewController: addNewHabitViewController)
         navigationController.modalPresentationStyle = .pageSheet
@@ -172,24 +173,36 @@ final class TrackerViewController: UIViewController, UISearchResultsUpdating, UI
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 5
+        return TrackerStore.shared.fetchedResultsController.sections?[section].numberOfObjects ?? 0
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(
-                withReuseIdentifier: TrackerCollectionViewCell.reuseIdentifier,
-                for: indexPath
-            ) as! TrackerCollectionViewCell
-        var trackerVM = TrackerStore.shared.fetchTrackerWithIndexPath(indexPath)
-            cell.configure(
-                emoji: trackerVM.emoji,
-                title: trackerVM.title,
-                days: 0,
-                color: trackerVM.color
-            )
+            withReuseIdentifier: TrackerCollectionViewCell.reuseIdentifier,
+            for: indexPath
+        ) as! TrackerCollectionViewCell
+
+        let trackerVM = TrackerStore.shared.fetchTrackerWithIndexPath(indexPath)
+
+        let days = RecordStore.shared.completedDaysCount(for: trackerVM.id)
+        let isCompletedToday = RecordStore.shared.isCompletedToday(trackerID: trackerVM.id)
+
+        cell.configure(
+            emoji: trackerVM.emoji,
+            title: trackerVM.title,
+            days: days,
+            color: color(from: trackerVM.color),
+            isCompleted: isCompletedToday
+        )
+
+        cell.onPlusTap = { [weak collectionView] in
+            _ = RecordStore.shared.toggleRecordForToday(trackerID: trackerVM.id)
+            collectionView?.reloadItems(at: [indexPath])
+        }
+        
         return cell
     }
-    
+
     func collectionView(_ collectionView: UICollectionView,
                         layout collectionViewLayout: UICollectionViewLayout,
                         sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -208,7 +221,7 @@ final class TrackerViewController: UIViewController, UISearchResultsUpdating, UI
             for: indexPath
         ) as! TrackerCollectionViewHeader
         
-        header.configure(title: "Домашний уют")
+        header.configure(title: TrackerStore.shared.fetchedResultsController.sections?[indexPath.section].name ?? "")
         return header
     }
     
@@ -216,6 +229,50 @@ final class TrackerViewController: UIViewController, UISearchResultsUpdating, UI
                         layout collectionViewLayout: UICollectionViewLayout,
                         referenceSizeForHeaderInSection section: Int) -> CGSize {
         return CGSize(width: collectionView.bounds.width, height: 40)
+    }
+    
+    private func updateEmptyState() {
+        let hasTrackers = TrackerStore.shared.trackersCount() > 0
+        collectionView.backgroundColor = hasTrackers ? .white : .clear
+        imageView.isHidden = hasTrackers
+        label.isHidden = hasTrackers
+    }
+    
+    // MARK: - Helpers
+    private func color(from hexString: String) -> UIColor {
+        // Trim whitespace and leading '#'
+        var hex = hexString.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        if hex.hasPrefix("#") { hex.removeFirst() }
+
+        // Support short RGB (e.g., FFF) by expanding to 6 chars
+        if hex.count == 3 {
+            let r = hex[hex.startIndex]
+            let g = hex[hex.index(hex.startIndex, offsetBy: 1)]
+            let b = hex[hex.index(hex.startIndex, offsetBy: 2)]
+            hex = String([r, r, g, g, b, b])
+        }
+        // Expect 6 or 8 characters (RRGGBB or RRGGBBAA)
+        guard hex.count == 6 || hex.count == 8 else {
+            return .systemBlue // Fallback color
+        }
+
+        var rgbValue: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&rgbValue)
+
+        let r, g, b, a: CGFloat
+        if hex.count == 8 {
+            r = CGFloat((rgbValue & 0xFF000000) >> 24) / 255.0
+            g = CGFloat((rgbValue & 0x00FF0000) >> 16) / 255.0
+            b = CGFloat((rgbValue & 0x0000FF00) >> 8) / 255.0
+            a = CGFloat(rgbValue & 0x000000FF) / 255.0
+        } else {
+            r = CGFloat((rgbValue & 0xFF0000) >> 16) / 255.0
+            g = CGFloat((rgbValue & 0x00FF00) >> 8) / 255.0
+            b = CGFloat(rgbValue & 0x0000FF) / 255.0
+            a = 1.0
+        }
+
+        return UIColor(red: r, green: g, blue: b, alpha: a)
     }
 }
 

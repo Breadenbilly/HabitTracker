@@ -10,7 +10,11 @@ import UIKit
 final class TrackerCollectionViewCell: UICollectionViewCell {
     
     static let reuseIdentifier: String = "TrackerCollectionViewCell"
-    
+
+    var onPlusTap: (() -> Void)?
+
+    private var isCompleted = false
+
     private let containerView: UIView = {
         let containerView = UIView()
         containerView.backgroundColor = .systemGreen
@@ -65,6 +69,7 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
     
     override init(frame: CGRect) {
             super.init(frame: frame)
+        plusButton.addTarget(self, action: #selector(plusButtonTapped), for: .touchUpInside)
         setupConstraints()
         }
         
@@ -111,14 +116,58 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         }
         
     }
-    
-    func configure(emoji: String, title: String, days: Int, color: UIColor) {
-           emojiLabel.text = emoji
-           titleLabel.text = title
-           daysLabel.text = "\(days) дней"
-           containerView.backgroundColor = color
+
+    @objc private func plusButtonTapped() {
+        onPlusTap?()
+    }
+
+    private func updatePlusButton(animated: Bool) {
+        let changes = {
+            if self.isCompleted {
+                let config = UIImage.SymbolConfiguration(pointSize: 10, weight: .medium)
+                self.plusButton.setImage(
+                    UIImage(systemName: "checkmark", withConfiguration: config),
+                    for: .normal
+                )
+                self.plusButton.alpha = 0.5
+            } else {
+                let config = UIImage.SymbolConfiguration(pointSize: 10, weight: .medium)
+                self.plusButton.setImage(
+                    UIImage(systemName: "plus", withConfiguration: config),
+                    for: .normal
+                )
+                self.plusButton.alpha = 1.0
+            }
+        }
+
+        if animated {
+            UIView.animate(withDuration: 0.2, animations: changes)
+        } else {
+            changes()
+        }
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        isCompleted = false
+        updatePlusButton(animated: false)
+    }
+
+    func configure(
+        emoji: String,
+        title: String,
+        days: Int,
+        color: UIColor,
+        isCompleted: Bool
+    ) {
+        emojiLabel.text = emoji
+        titleLabel.text = title
+        daysLabel.text = "\(days) дней"
+        containerView.backgroundColor = color
         plusButton.backgroundColor = color
-       }
-        
+
+        self.isCompleted = isCompleted
+        updatePlusButton(animated: false)
+    }
     }
 
