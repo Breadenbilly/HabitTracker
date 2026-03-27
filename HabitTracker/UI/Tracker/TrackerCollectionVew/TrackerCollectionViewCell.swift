@@ -15,7 +15,7 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
 
     private var isCompleted = false
 
-    private let containerView: UIView = {
+    /*private*/ let containerView: UIView = {
         let containerView = UIView()
         containerView.backgroundColor = .systemGreen
         containerView.layer.cornerRadius = 16
@@ -37,7 +37,16 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         label.text = "🗯"
         return label
     }()
-    
+
+    private let pinImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(systemName: "pin.fill")
+        imageView.tintColor = .white
+        imageView.contentMode = .scaleAspectFit
+        imageView.isHidden = true
+        return imageView
+    }()
+
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .left
@@ -80,11 +89,12 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
    private func setupConstraints() {
         contentView.addSubview(containerView)
         containerView.addSubview(emojiBackgroundLabel)
+        containerView.addSubview(pinImageView)
         emojiBackgroundLabel.addSubview(emojiLabel)
         containerView.addSubview(titleLabel)
         contentView.addSubview(daysLabel)
         contentView.addSubview(plusButton)
-        
+
        containerView.snp.makeConstraints { make in
                    make.top.leading.trailing.equalToSuperview()
                    make.height.equalTo(90)
@@ -99,7 +109,13 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
             make.center.equalTo(emojiBackgroundLabel)
             make.height.equalTo(16)
         }
-        
+
+        pinImageView.snp.makeConstraints { make in
+           make.top.equalTo(containerView).inset(12)
+           make.trailing.equalTo(containerView).inset(12)
+           make.width.height.equalTo(16)
+        }
+
         titleLabel.snp.makeConstraints { make in
             make.leading.bottom.trailing.equalTo(containerView).inset(12)
         }
@@ -158,13 +174,15 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         title: String,
         days: Int,
         color: UIColor,
-        isCompleted: Bool
+        isCompleted: Bool,
+        isPinned: Bool = false
     ) {
         emojiLabel.text = emoji
         titleLabel.text = title
         daysLabel.text = "\(days) дней"
         containerView.backgroundColor = color
         plusButton.backgroundColor = color
+        pinImageView.isHidden = !isPinned 
 
         self.isCompleted = isCompleted
         updatePlusButton(animated: false)

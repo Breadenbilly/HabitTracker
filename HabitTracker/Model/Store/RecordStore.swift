@@ -11,8 +11,6 @@ final class RecordStore: NSObject, NSFetchedResultsControllerDelegate {
 
     static let shared = RecordStore()
 
-
-
     var context: NSManagedObjectContext {
         CoreDataManager.shared.persistentContainer.viewContext
     }
@@ -37,16 +35,16 @@ final class RecordStore: NSObject, NSFetchedResultsControllerDelegate {
         return fetchedResultsController
     }()
 
-    func fetchTrackers() -> [RecordVM] {
-        fetchedResultsController.fetchedObjects
-        return []
-    }
+//    func fetchTrackers() -> [RecordVM] {
+//        fetchedResultsController.fetchedObjects
+//        return []
+//    }
 
     @discardableResult
     func createRecord(_ vm: RecordVM) -> Bool {
         let recordCD = RecordCD(context: context)
         recordCD.date = vm.date
-        recordCD.trackerID = Int32(vm.trackerID)
+        recordCD.trackerID = vm.trackerID
 
         do {
             try context.save()
@@ -60,9 +58,9 @@ final class RecordStore: NSObject, NSFetchedResultsControllerDelegate {
 
 extension RecordStore {
 
-    func completedDaysCount(for trackerID: Int) -> Int {
+    func completedDaysCount(for trackerID: UUID) -> Int {
         let request = RecordCD.fetchRequest()
-        request.predicate = NSPredicate(format: "trackerID == %d", trackerID)
+        request.predicate = NSPredicate(format: "trackerID == %@", trackerID as CVarArg)
         do {
             return try context.count(for: request)
         } catch {
@@ -71,7 +69,7 @@ extension RecordStore {
         }
     }
 
-    func isCompletedToday(trackerID: Int, date: Date = Date()) -> Bool {
+    func isCompletedToday(trackerID: UUID, date: Date = Date()) -> Bool {
         let request = RecordCD.fetchRequest()
 
         let calendar = Calendar.current
@@ -79,8 +77,8 @@ extension RecordStore {
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
 
         request.predicate = NSPredicate(
-            format: "trackerID == %d AND date >= %@ AND date < %@",
-            trackerID,
+            format: "trackerID == %@ AND date >= %@ AND date < %@",
+            trackerID as CVarArg,
             startOfDay as NSDate,
             endOfDay as NSDate
         )
@@ -95,12 +93,12 @@ extension RecordStore {
     }
 
     @discardableResult
-    func createRecordForToday(trackerID: Int, date: Date = Date()) -> Bool {
+    func createRecordForToday(trackerID: UUID, date: Date = Date()) -> Bool {
         guard !isCompletedToday(trackerID: trackerID, date: date) else { return false }
 
         let recordCD = RecordCD(context: context)
         recordCD.date = date
-        recordCD.trackerID = Int32(trackerID)
+        recordCD.trackerID = trackerID
 
         do {
             try context.save()
@@ -112,7 +110,7 @@ extension RecordStore {
     }
 
     @discardableResult
-    func deleteRecordForToday(trackerID: Int, date: Date = Date()) -> Bool {
+    func deleteRecordForToday(trackerID: UUID, date: Date = Date()) -> Bool {
         let request = RecordCD.fetchRequest()
 
         let calendar = Calendar.current
@@ -120,8 +118,8 @@ extension RecordStore {
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
 
         request.predicate = NSPredicate(
-            format: "trackerID == %d AND date >= %@ AND date < %@",
-            trackerID,
+            format: "trackerID == %@ AND date >= %@ AND date < %@",
+            trackerID as CVarArg,
             startOfDay as NSDate,
             endOfDay as NSDate
         )
@@ -141,12 +139,28 @@ extension RecordStore {
     }
 
     @discardableResult
-    func toggleRecordForToday(trackerID: Int, date: Date = Date()) -> Bool {
+    func toggleRecordForToday(trackerID: UUID, date: Date = Date()) -> Bool {
         if isCompletedToday(trackerID: trackerID, date: date) {
             return deleteRecordForToday(trackerID: trackerID, date: date)
         } else {
             return createRecordForToday(trackerID: trackerID, date: date)
         }
+    }
+
+    func completedTodayIDs(date: Date = Date()) -> [UUID] {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+
+        let request = RecordCD.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "date >= %@ AND date < %@",
+            startOfDay as NSDate,
+            endOfDay as NSDate
+        )
+
+        let records = (try? context.fetch(request)) ?? []
+        return records.compactMap { $0.trackerID }
     }
 }
 

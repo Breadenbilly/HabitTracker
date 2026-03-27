@@ -1,16 +1,17 @@
 //
-//  CategoryTableViewCell.swift
+//  Filters.swift
 //  HabitTracker
 //
-//  Created by Timur Mamedov on 13.12.2025.
+//  Created by Timur Mamedov on 20.3.2026.
 //
+
 
 import UIKit
 import SnapKit
 
-final class CategoryTableViewCell: UITableViewCell {
+final class FiltersViewCell: UITableViewCell {
 
-    static let reuseIdentifier = "CategoryTableViewCell"
+    static let reuseIdentifier = "FiltersTableViewCell"
 
     private let titleLabel: UILabel = {
         let label = UILabel()
@@ -22,14 +23,12 @@ final class CategoryTableViewCell: UITableViewCell {
     private let checkmarkImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(systemName: "checkmark"))
         imageView.tintColor = .systemBlue
-        imageView.isHidden = true
         return imageView
     }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         backgroundColor = .grayBackground.withAlphaComponent(0.3)
-        selectionStyle = .none
         setupConstraints()
     }
 
@@ -42,14 +41,13 @@ final class CategoryTableViewCell: UITableViewCell {
         checkmarkImageView.isHidden = !isSelected
     }
 
-    private func setupConstraints() {
+    func setupConstraints() {
         contentView.addSubview(titleLabel)
         contentView.addSubview(checkmarkImageView)
 
         titleLabel.snp.makeConstraints { make in
             make.leading.equalTo(contentView).inset(16)
             make.centerY.equalTo(contentView)
-            make.trailing.lessThanOrEqualTo(checkmarkImageView.snp.leading).offset(-8)
         }
 
         checkmarkImageView.snp.makeConstraints { make in

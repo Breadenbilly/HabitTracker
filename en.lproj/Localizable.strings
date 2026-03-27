@@ -15,6 +15,7 @@
 "Cancel" = "Cancel";
 "Create" = "Create";
 "Type tracker's name" = "Type tracker's name";
+"Too many symbols" = "Too many symbols";
 "Category" = "Category";
 "Add Category" = "Add Category";
 "Habits and events can be grouped together by meaning" = "Habits and events can be grouped together by meaning";
@@ -36,4 +37,21 @@
 "Friday" = "Friday";
 "Saturday" = "Saturday";
 "Sunday" = "Sunday";
+"Every day" = "Every day";
+
 "Color" = "Color";
+
+"Wow! What a technology!" = "Wow! What a technology!";
+"Track only what you want" = "Track only what you want";
+"Even if its not yoga" = "Even if its not yoga";
+
+"Edit" = "Edit";
+"Delete" = "Delete";
+"Delete category?" = "Delete category?";
+
+"All trackers" = "All trackers";
+"Trackers for today" = "Trackers for today";
+"Completed" = "Completed";
+"Not Completed" = "Not Completed";
+
+"Pinned" = "Pinned";

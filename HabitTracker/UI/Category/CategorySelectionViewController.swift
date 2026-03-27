@@ -12,6 +12,7 @@ final class CategorySelectionViewController: UIViewController, UITableViewDelega
     private let viewModel = CategorySelectionViewModel()
     var onCategoryPicked: ((CategoryVM) -> Void)?
     
+
     private lazy var imageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(named: "Star")
@@ -30,15 +31,17 @@ final class CategorySelectionViewController: UIViewController, UITableViewDelega
     }()
     
     private lazy var tableView: UITableView = {
-        let tableView = UITableView()
+        let tableView = UITableView(frame: .zero, style: .plain)
+        tableView.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        tableView.tableFooterView = UIView()
         tableView.dataSource = self
         tableView.delegate = self
         tableView.register(CategoryTableViewCell.self, forCellReuseIdentifier: CategoryTableViewCell.reuseIdentifier)
         tableView.isScrollEnabled = true
-        tableView.separatorStyle = .none
+        tableView.backgroundColor = .systemBackground
         return tableView
     }()
-    
+
     private lazy var addCategoryButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle(NSLocalizedString("Add category", comment: ""), for: .normal)
@@ -60,11 +63,11 @@ final class CategorySelectionViewController: UIViewController, UITableViewDelega
         button.layer.cornerRadius = 16
         return button
     }()
-    
+
     init() {
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -120,11 +123,11 @@ final class CategorySelectionViewController: UIViewController, UITableViewDelega
         }
         
         tableView.snp.makeConstraints { make in
-            make.leading.trailing.equalTo(view.safeAreaLayoutGuide)
+            make.leading.trailing.equalTo(view.safeAreaLayoutGuide).inset(16) // ← добавить inset(16)
             make.top.equalTo(view.safeAreaLayoutGuide).offset(24)
             make.bottom.equalTo(addCategoryButton.snp.top).offset(-16)
         }
-        
+
     }
     
     private func bindViewModel() {
@@ -161,4 +164,77 @@ final class CategorySelectionViewController: UIViewController, UITableViewDelega
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         viewModel.selectCategory(at: indexPath.row)
     }
+
+    func tableView(_ tableView: UITableView,
+                   contextMenuConfigurationForRowAt indexPath: IndexPath,
+                   point: CGPoint) -> UIContextMenuConfiguration? {
+
+        let category = viewModel.category(at: indexPath.row)
+
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+            guard let self else { return UIMenu() }
+
+            let edit = UIAction(title: NSLocalizedString("Edit", comment: ""), image: UIImage(systemName: "pencil")) { _ in
+                self.editCategory(category)
+            }
+
+            let delete = UIAction(
+                title: NSLocalizedString("Delete", comment: ""),
+                image: UIImage(systemName: "trash"),
+                attributes: .destructive
+            ) { _ in
+                self.deleteCategory(category)
+            }
+
+            return UIMenu(children: [edit, delete])
+        }
+    }
+
+    private func editCategory(_ category: CategoryVM) {
+        let vc = AddNewCategoryController(categoryToEdit: category)
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
+    private func deleteCategory(_ category: CategoryVM) {
+        let alert = UIAlertController(
+            title: nil,
+            message: "Delete category?",
+            preferredStyle: .actionSheet
+        )
+
+        alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel))
+
+        alert.addAction(UIAlertAction(title: NSLocalizedString("Delete", comment: ""), style: .destructive) { [weak self] _ in
+            CategoryStore.shared.deleteCategory(id: category.id)
+            self?.viewModel.load()
+        })
+
+        present(alert, animated: true)
+    }
+
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        75
+    }
+
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        let count = viewModel.numberOfRows()
+        let isFirst = indexPath.row == 0
+        let isLast = indexPath.row == count - 1
+
+        var corners: CACornerMask = []
+        if isFirst {
+            corners.formUnion([.layerMinXMinYCorner, .layerMaxXMinYCorner])
+        }
+        if isLast {
+            corners.formUnion([.layerMinXMaxYCorner, .layerMaxXMaxYCorner])
+            cell.separatorInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: .greatestFiniteMagnitude)
+        } else {
+            cell.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        }
+
+        cell.layer.cornerRadius = (isFirst || isLast) ? 16 : 0
+        cell.layer.maskedCorners = corners
+        cell.clipsToBounds = true
+    }
 }
+

@@ -24,13 +24,14 @@ final class OnboardingViewController: UIViewController {
         label.textAlignment = .center
         label.font = UIFont.systemFont(ofSize: 32, weight: .bold)
         label.textColor = .black
+        label.numberOfLines = 0
         return label
     }()
 
     private let button: UIButton = {
         let button = UIButton(type: .system)
         button.backgroundColor = .black
-        button.setTitle("Вот это технологии!", for: .normal)
+        button.setTitle(NSLocalizedString("Wow! What a technology!", comment: ""), for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.textAlignment = .center
         button.layer.cornerRadius = 8
@@ -53,6 +54,7 @@ final class OnboardingViewController: UIViewController {
         label.text = labelText
         backgroundImageView.image = UIImage(named: imageName)
         setupConstraints()
+        button.addTarget(self, action: #selector(didTapButton), for: .touchUpInside)
     }
 
     private func setupConstraints() {
@@ -66,7 +68,7 @@ final class OnboardingViewController: UIViewController {
 
         label.snp.makeConstraints { (make) in
             make.centerX.equalToSuperview()
-            make.centerY.equalToSuperview().offset(-100)
+            make.centerY.equalToSuperview().offset(60)
             make.leading.trailing.equalToSuperview().inset(16)
         }
 
@@ -75,5 +77,10 @@ final class OnboardingViewController: UIViewController {
             make.leading.trailing.equalToSuperview().inset(20)
             make.bottom.equalToSuperview().inset(80)
         }
+    }
+
+    @objc private func didTapButton() {
+        UserDefaults.standard.set(true, forKey: "hasSeenOnboarding")
+        dismiss(animated: true)
     }
 }
