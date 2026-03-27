@@ -8,6 +8,7 @@
 import UIKit
 
 extension AddNewHabitViewController {
+    
     // размер хедера (либо 28 для цвета или эмодзи либо никакой)
     func collectionView(_ collectionView: UICollectionView,
                         layout collectionViewLayout: UICollectionViewLayout,
@@ -84,33 +85,17 @@ extension AddNewHabitViewController {
         else { fatalError("Unexpected collectionView")}
     }
 
-// активация выбора при тапе
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if collectionView === emojiCollectionView {
-            if let prev = selectedEmojiIndexPath, prev != indexPath {
-                let prevCellAsEmoji = collectionView.cellForItem(at: prev) as? EmojiCell
-                prevCellAsEmoji?.configure(isSelected: false)
-
-            }
-            let cellAsEmoji = collectionView.cellForItem(at: indexPath) as? EmojiCell
-            cellAsEmoji?.configure(isSelected: true)
-
             selectedEmojiIndexPath = indexPath
             selectedEmoji = emojis[indexPath.item]
         } else if collectionView === colorCollectionView {
-            if let prevColor = selectedColorIndexPath, prevColor != indexPath {
-                let prevCellAsColor = collectionView.cellForItem(at: prevColor) as? ColorCell
-                prevCellAsColor?.configure(isSelected: false)
-
-            }
-            let cellAsColor = collectionView.cellForItem(at: indexPath) as? ColorCell
-            cellAsColor?.configure(isSelected: true)
-
             selectedColorIndexPath = indexPath
             selectedColor = colors[indexPath.item]
-         } else {
+        } else {
             fatalError("Unexpected collectionView")
         }
+        validateForm()
     }
 }
 

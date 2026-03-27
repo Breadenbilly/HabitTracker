@@ -15,6 +15,7 @@
 "Сancel" = "Отмена";
 "Create" = "Создать";
 "Type tracker's name" = "Введите название трекера";
+"Too many symbols" = "Слишком много символов";
 "Category" = "Категория";
 "Add Category" = "Добавить категорию";
 "Habits and events can be grouped together by meaning" = "привычки и категории могут быть объединены по смыслу";
@@ -28,6 +29,7 @@
 "Fri" = "Пт";
 "Sat" = "Сб";
 "Sun" = "Вс";
+"Every day" = "Каждый день";
 
 "Monday" = "Понедельник";
 "Tuesday" = "Вторник";
@@ -38,3 +40,18 @@
 "Sunday" = "Воскресенье";
 
 "Color" = "Цвет";
+
+"Wow! What a technology!" = "Вот это технологии!";
+"Track only what you want" = "Отслеживайте только то, что хотите";
+"Even if its not yoga" = "Даже если это не литры воды и йога";
+
+"Edit" = "Редактировать";
+"Delete" = "Удалить";
+"Delete category?" = "Эта категория точно не нужна?";
+
+"All trackers" = "Все трекеры";
+"Trackers for today" = "Трекеры на сегодня";
+"Completed" = "Завершённые";
+"Not Completed" = "Не завершённые";
+
+"Pinned" = "Закрепленные";

@@ -13,7 +13,18 @@ final class TabBarViewController: UITabBarController {
         super.viewDidLoad()
         setupView()
     }
-    
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+
+        let hasSeenOnboarding = UserDefaults.standard.bool(forKey: "hasSeenOnboarding")
+        if !hasSeenOnboarding {
+            let onboardingContainer = OnboardingContainer()
+            onboardingContainer.modalPresentationStyle = .fullScreen
+            present(onboardingContainer, animated: true)
+        }
+    }
+
     private func setupView() {
         
         let trackerViewController = TrackerViewController()

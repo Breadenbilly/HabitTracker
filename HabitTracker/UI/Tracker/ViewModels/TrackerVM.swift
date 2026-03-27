@@ -8,8 +8,10 @@
 import UIKit
 
 struct TrackerVM: Identifiable {
-    var id: Int
+    var id: UUID 
     var title: String
     var emoji: String
     var color: String
+    var categoryID: UUID?
+    var schedule: [Weekday]
 }

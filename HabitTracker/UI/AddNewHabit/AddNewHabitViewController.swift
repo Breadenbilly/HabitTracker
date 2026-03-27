@@ -10,8 +10,17 @@ import UIKit
 import SnapKit
 
 final class AddNewHabitViewController: UIViewController,
+                                       UITextFieldDelegate,
                                        UICollectionViewDataSource,
                                        UICollectionViewDelegateFlowLayout {
+
+    var editingTracker: TrackerVM?
+
+    private var didApplyInitialSelection = false
+
+    private var errorLabelHeightConstraint: Constraint?
+    private var daysCountLabelHeightConstraint: Constraint?
+    private var daysCountLabelTopConstraint: Constraint?
 
     private let addNewHabitViewModel = AddNewHabitViewModel()
 
@@ -33,7 +42,15 @@ final class AddNewHabitViewController: UIViewController,
         let scrollView = UIScrollView()
         return scrollView
     }()
-    
+
+    private lazy var daysCountLabel: UILabel = {
+        let label = UILabel()
+        label.text = ""
+        label.textAlignment = .center
+        label.font = .systemFont(ofSize: 32, weight: .bold)
+        return label
+    }()
+
     private lazy var textField: UITextField = {
         let textField = UITextField()
         textField.placeholder = NSLocalizedString("Type tracker's name", comment: "")
@@ -43,22 +60,32 @@ final class AddNewHabitViewController: UIViewController,
         textField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
         return textField
     }()
-    
+
     private lazy var textFieldView: UIView = {
         let view = UIView()
         view.backgroundColor = .grayBackground.withAlphaComponent(0.3)
         view.layer.cornerRadius = 16
         return view
     }()
-    
+
+    private lazy var errorLabel: UILabel = {
+        let errorLabel = UILabel()
+        errorLabel.textColor = .red
+        errorLabel.numberOfLines = 0
+        errorLabel.textAlignment = .center
+        errorLabel.isHidden = true
+        errorLabel.text = NSLocalizedString("Too many symbols", comment: "")
+        return errorLabel
+    }()
+
     private lazy var separator: UIView = {
         let separator = UIView()
         separator.backgroundColor = .separator
         return separator
     }()
-    
+
     // MARK: - Stacks: Category
-    
+
     private lazy var categoryLabel: UILabel = {
         let label = UILabel()
         label.text = NSLocalizedString("Category", comment: "")
@@ -66,7 +93,7 @@ final class AddNewHabitViewController: UIViewController,
         label.textColor = .label
         return label
     }()
-    
+
     private lazy var categoryValueLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 17, weight: .regular)
@@ -76,7 +103,7 @@ final class AddNewHabitViewController: UIViewController,
         label.setContentCompressionResistancePriority(.required, for: .horizontal)
         return label
     }()
-    
+
     private lazy var categoryVerticalStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -85,7 +112,7 @@ final class AddNewHabitViewController: UIViewController,
         stackView.alignment = .leading
         return stackView
     }()
-    
+
     private lazy var categoryImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .center
@@ -94,7 +121,7 @@ final class AddNewHabitViewController: UIViewController,
         imageView.tintColor = .grayFontTextEditor
         return imageView
     }()
-    
+
     private lazy var categoryFinalStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
@@ -103,9 +130,9 @@ final class AddNewHabitViewController: UIViewController,
         stackView.alignment = .fill
         return stackView
     }()
-    
+
     // MARK: - Stacks: Schedule
-    
+
     private lazy var scheduleLabel: UILabel = {
         let label = UILabel()
         label.text = NSLocalizedString("Schedule", comment: "")
@@ -113,7 +140,7 @@ final class AddNewHabitViewController: UIViewController,
         label.textColor = .label
         return label
     }()
-    
+
     private lazy var scheduleValueLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 17, weight: .regular)
@@ -123,7 +150,7 @@ final class AddNewHabitViewController: UIViewController,
         label.setContentCompressionResistancePriority(.required, for: .horizontal)
         return label
     }()
-    
+
     private lazy var scheduleLabelStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -132,7 +159,7 @@ final class AddNewHabitViewController: UIViewController,
         stackView.alignment = .leading
         return stackView
     }()
-    
+
     private lazy var scheduleImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .center
@@ -141,7 +168,7 @@ final class AddNewHabitViewController: UIViewController,
         imageView.tintColor = .grayFontTextEditor
         return imageView
     }()
-    
+
     private lazy var scheduleFinalStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
@@ -192,7 +219,7 @@ final class AddNewHabitViewController: UIViewController,
         return collectionView
     }()
     // MARK: - Stacks: Bottom
-    
+
     private lazy var finalStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -204,7 +231,7 @@ final class AddNewHabitViewController: UIViewController,
         stackView.layoutMargins = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
         return stackView
     }()
-    
+
     private lazy var cancelButton: UIButton = {
         let button = UIButton()
         button.setTitle(NSLocalizedString("Cancel", comment: ""), for: .normal)
@@ -215,7 +242,7 @@ final class AddNewHabitViewController: UIViewController,
         button.layer.borderColor = UIColor.systemRed.cgColor
         return button
     }()
-    
+
     private lazy var createButton: UIButton = {
         let button = UIButton()
         button.setTitle(NSLocalizedString("Create", comment: ""), for: .normal)
@@ -226,21 +253,22 @@ final class AddNewHabitViewController: UIViewController,
         button.addTarget(self, action: #selector(createButtonTapped), for: .touchUpInside)
         return button
     }()
-    
+
     // MARK: - Init
     init() {
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     // MARK: - Lifecycle
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
+        textField.delegate = self
         title = NSLocalizedString("New habit", comment: "")
         navigationItem.largeTitleDisplayMode = .never
         addNewHabitViewModel.onSelectedDaysChanged = { [weak self] days in
@@ -255,20 +283,30 @@ final class AddNewHabitViewController: UIViewController,
         setupGestures()
         updateScheduleLabel(selectedDays: [])
         updateCategoryLabel(selectedCategory: nil)
-        
+
         cancelButton.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
+
+        if let tracker = editingTracker {
+            title = NSLocalizedString("Edit habit", comment: "")
+            createButton.setTitle(NSLocalizedString("Save", comment: ""), for: .normal)
+            prefillForm(with: tracker)
+            daysCountLabel.isHidden = false
+            daysCountLabelHeightConstraint?.deactivate()
+            let days = RecordStore.shared.completedDaysCount(for: tracker.id)
+            daysCountLabel.text = String(format: NSLocalizedString("%d days", comment: ""), days)
+        }
     }
     
     private func setupGestures() {
         categoryFinalStackView.isUserInteractionEnabled = true
         let categoryTap = UITapGestureRecognizer(target: self, action: #selector(categoryTapped))
         categoryFinalStackView.addGestureRecognizer(categoryTap)
-        
+
         scheduleLabelStackView.isUserInteractionEnabled = true
         let scheduleTap = UITapGestureRecognizer(target: self, action: #selector(scheduleTapped))
         scheduleLabelStackView.addGestureRecognizer(scheduleTap)
     }
-    
+
     @objc private func categoryTapped() {
         let vc = CategorySelectionViewController()
 
@@ -278,7 +316,7 @@ final class AddNewHabitViewController: UIViewController,
 
         navigationController?.pushViewController(vc, animated: true)
     }
-    
+
     @objc private func scheduleTapped() {
         let vc = ScheduleSelectionViewController()
         vc.preselectedDays = addNewHabitViewModel.selectedDays
@@ -288,65 +326,77 @@ final class AddNewHabitViewController: UIViewController,
         }
         navigationController?.pushViewController(vc, animated: true)
     }
-    
-    
+
     private func setupConstraints() {
-        
+
         view.addSubview(scrollView)
         scrollView.snp.makeConstraints { make in
             make.top.bottom.leading.trailing.equalTo(view)
         }
-        
+
         scrollView.contentLayoutGuide.snp.makeConstraints { make in
             make.width.equalTo(scrollView.frameLayoutGuide)
         }
-        
+
+        scrollView.addSubview(daysCountLabel)
+        daysCountLabel.snp.makeConstraints { make in
+            daysCountLabelTopConstraint = make.top.equalTo(scrollView.contentLayoutGuide.snp.top).offset(0).constraint
+            make.centerX.equalTo(scrollView.contentLayoutGuide)
+            daysCountLabelHeightConstraint = make.height.equalTo(0).constraint
+        }
         scrollView.addSubview(textFieldView)
         textFieldView.snp.makeConstraints { make in
             make.leading.trailing.equalTo(scrollView.contentLayoutGuide).inset(16)
-            make.top.equalTo(scrollView.contentLayoutGuide).offset(24)
+            make.top.equalTo(daysCountLabel.snp.bottom).offset(24)
             make.height.equalTo(75)
         }
-        
+
         textFieldView.addSubview(textField)
         textField.snp.makeConstraints { make in
             make.leading.trailing.equalTo(textFieldView).inset(16)
             make.centerY.equalTo(textFieldView)
         }
-        
+
+        scrollView.addSubview(errorLabel)
+        errorLabel.snp.makeConstraints { make in
+            make.top.equalTo(textFieldView.snp.bottom).offset(8)
+            make.leading.trailing.equalTo(scrollView.contentLayoutGuide).inset(28)
+            errorLabelHeightConstraint = make.height.equalTo(0).constraint
+        }
+
         scrollView.addSubview(finalStackView)
         finalStackView.snp.makeConstraints { make in
-            make.top.equalTo(textFieldView.snp.bottom).offset(16)
+            make.top.equalTo(errorLabel.snp.bottom).offset(16)
             make.leading.trailing.equalTo(scrollView.contentLayoutGuide).inset(16)
             make.height.equalTo(150)
         }
-        
+
         categoryVerticalStackView.addArrangedSubview(categoryLabel)
         categoryVerticalStackView.addArrangedSubview(categoryValueLabel)
         categoryFinalStackView.addArrangedSubview(categoryVerticalStackView)
         categoryFinalStackView.addArrangedSubview(categoryImageView)
-        
+
         categoryImageView.snp.makeConstraints { make in
             make.width.height.equalTo(24)
         }
-        
+
         categoryValueLabel.snp.makeConstraints { make in
             make.top.equalTo(categoryLabel).offset(24)
         }
-        
+
         scheduleLabelStackView.addArrangedSubview(scheduleLabel)
         scheduleLabelStackView.addArrangedSubview(scheduleValueLabel)
         scheduleFinalStackView.addArrangedSubview(scheduleLabelStackView)
         scheduleFinalStackView.addArrangedSubview(scheduleImageView)
-        
+
         scheduleImageView.snp.makeConstraints { make in
             make.width.height.equalTo(24)
         }
-        
+
         scheduleValueLabel.snp.makeConstraints { make in
             make.top.equalTo(scheduleLabel).offset(24)
         }
-        
+
         finalStackView.addArrangedSubview(categoryFinalStackView)
         finalStackView.addArrangedSubview(scheduleFinalStackView)
         finalStackView.addSubview(separator)
@@ -356,7 +406,7 @@ final class AddNewHabitViewController: UIViewController,
             make.height.equalTo(1)
             make.leading.trailing.equalTo(finalStackView).inset(16)
         }
-        
+
         scrollView.addSubview(emojiCollectionView)
 
         emojiCollectionView.snp.makeConstraints { make in
@@ -366,7 +416,7 @@ final class AddNewHabitViewController: UIViewController,
 
         }
         scrollView.addSubview(colorCollectionView)
-        
+
         colorCollectionView.snp.makeConstraints { make in
             make.top.equalTo(emojiCollectionView.snp.bottom).offset(24)
             make.leading.trailing.equalTo(scrollView.contentLayoutGuide).inset(18)
@@ -375,16 +425,16 @@ final class AddNewHabitViewController: UIViewController,
         }
         scrollView.addSubview(cancelButton)
         scrollView.addSubview(createButton)
-        
+
         cancelButton.snp.makeConstraints { make in
             make.top.equalTo(colorCollectionView.snp.bottom).offset(16)
             make.bottom.equalTo(scrollView.contentLayoutGuide).inset(34)
             make.leading.equalTo(scrollView.contentLayoutGuide).inset(20)
             make.height.equalTo(60)
         }
-        
+
         createButton.snp.makeConstraints { make in
-            make.trailing.equalTo(scrollView).offset(-20)
+            make.trailing.equalTo(scrollView.frameLayoutGuide).inset(20)
             make.bottom.equalTo(scrollView.contentLayoutGuide).inset(34)
             make.top.equalTo(colorCollectionView.snp.bottom).offset(16)
             make.leading.equalTo(cancelButton.snp.trailing).offset(8)
@@ -392,34 +442,72 @@ final class AddNewHabitViewController: UIViewController,
             make.height.equalTo(60)
         }
     }
-    
-    private func updateScheduleLabel(selectedDays: [Weekday]) {
 
+    func textField(_ textField: UITextField,
+                   shouldChangeCharactersIn range: NSRange,
+                   replacementString string: String) -> Bool {
+
+        let currentText = textField.text ?? ""
+        let updatedText = (currentText as NSString).replacingCharacters(in: range, with: string)
+
+        if updatedText.count > 38 {
+            setErrorVisible(true)
+            return false
+        } else {
+            setErrorVisible(false)
+            return true
+        }
+    }
+
+    private func setErrorVisible(_ isVisible: Bool) {
+        errorLabel.isHidden = !isVisible
+
+        if isVisible {
+            errorLabelHeightConstraint?.deactivate()   // пусть label сам возьмёт высоту
+        } else {
+            errorLabelHeightConstraint?.activate()     // высота 0
+        }
+
+        UIView.animate(withDuration: 0.2) {
+            self.view.layoutIfNeeded()
+        }
+    }
+
+    private func updateScheduleLabel(selectedDays: [Weekday]) {
         if selectedDays.isEmpty {
             scheduleValueLabel.text = nil
             scheduleValueLabel.isHidden = true
             scheduleLabelStackView.removeArrangedSubview(scheduleValueLabel)
-            
         } else {
-            let text = selectedDays
-                .sorted { $0.rawValue < $1.rawValue }
-                .map { $0.shortTitle }
-                .joined(separator: ", ")
-            scheduleValueLabel.text = text
+            if selectedDays.count == Weekday.allCases.count {
+                scheduleValueLabel.text = NSLocalizedString("Every day", comment: "")
+            } else {
+                let text = selectedDays
+                    .sorted { $0.rawValue < $1.rawValue }
+                    .map { $0.shortTitle }
+                    .joined(separator: ", ")
+                scheduleValueLabel.text = text
+            }
+
             scheduleLabelStackView.insertArrangedSubview(scheduleValueLabel, at: 1)
-            scheduleValueLabel.isHidden = false        }
+            scheduleValueLabel.isHidden = false
+        }
+
     }
-    
+
     private func updateCategoryLabel(selectedCategory: CategoryVM?) {
         categoryValueLabel.text = selectedCategory?.title
         categoryValueLabel.isHidden = (selectedCategory == nil)
     }
-    
+
     @objc private func textFieldDidChange() {
+        if (textField.text ?? "").count <= 38 {
+            setErrorVisible(false)
+        }
         validateForm()
     }
-    
-    private func validateForm() {
+
+    func validateForm() {
         let hasTitle = !(textField.text?.trimmingCharacters(in: .whitespaces).isEmpty ?? true)
         let hasCategory = addNewHabitViewModel.selectedCategory != nil
         let hasSchedule = !addNewHabitViewModel.selectedDays.isEmpty
@@ -431,30 +519,72 @@ final class AddNewHabitViewController: UIViewController,
         createButton.backgroundColor = isValid ? .label : .systemGray
     }
 
+    private func prefillForm(with tracker: TrackerVM) {
+        textField.text = tracker.title
+
+        if let emojiIndex = emojis.firstIndex(of: tracker.emoji) {
+            selectedEmoji = tracker.emoji
+            selectedEmojiIndexPath = IndexPath(item: emojiIndex, section: 0)
+        }
+
+        if let colorIndex = colors.firstIndex(of: tracker.color) {
+            selectedColor = tracker.color
+            selectedColorIndexPath = IndexPath(item: colorIndex, section: 0)
+        }
+
+        addNewHabitViewModel.setSelectedDays(tracker.schedule)
+
+        if let categoryID = tracker.categoryID,
+           let category = CategoryStore.shared.fetchCategory(by: categoryID) {
+            addNewHabitViewModel.setSelectedCategory(category)
+        }
+
+        validateForm()
+    }
 
     @objc private func cancelButtonTapped() {
         dismiss(animated: true)
     }
-    
+
     @objc private func createButtonTapped() {
         guard let title = textField.text?.trimmingCharacters(in: .whitespaces),
               !title.isEmpty,
               let category = addNewHabitViewModel.selectedCategory,
               let emoji = selectedEmoji,
-              let color = selectedColor else {
-            return
-        }
+              let color = selectedColor else { return }
 
         let tracker = TrackerVM(
-            id: Int.random(in: 1...100000),
+            id: editingTracker?.id ?? UUID(),  // сохраняем id при редактировании
             title: title,
             emoji: emoji,
-            color: color
+            color: color,
+            categoryID: category.id,
+            schedule: addNewHabitViewModel.selectedDays
         )
 
-        TrackerStore.shared.createTracker(tracker, categoryID: category.id)
+        if editingTracker != nil {
+            TrackerStore.shared.updateTracker(tracker, categoryID: category.id)
+        } else {
+            TrackerStore.shared.createTracker(tracker, categoryID: category.id)
+        }
+
         onTrackerCreated?()
         dismiss(animated: true)
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+
+        guard !didApplyInitialSelection, editingTracker != nil else { return }
+        didApplyInitialSelection = true
+
+        if let emojiIndexPath = selectedEmojiIndexPath {
+            emojiCollectionView.selectItem(at: emojiIndexPath, animated: false, scrollPosition: [])
+        }
+
+        if let colorIndexPath = selectedColorIndexPath {
+            colorCollectionView.selectItem(at: colorIndexPath, animated: false, scrollPosition: [])
+        }
     }
 }
 

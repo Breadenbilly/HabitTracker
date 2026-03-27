@@ -27,6 +27,13 @@ final class EmojiCell: UICollectionViewCell {
         return selectedView
     }()
 
+
+    override var isSelected: Bool {
+        didSet {
+            selectedView.isHidden = !isSelected
+        }
+    }
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupLayout()
@@ -51,7 +58,4 @@ final class EmojiCell: UICollectionViewCell {
         label.text = emoji
     }
 
-    func configure(isSelected: Bool) {
-        selectedView.isHidden = !isSelected
-    }
 }

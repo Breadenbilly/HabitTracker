@@ -27,6 +27,12 @@ final class ColorCell: UICollectionViewCell {
         return selectedView
     }()
 
+    override var isSelected: Bool {
+        didSet {
+            selectedView.isHidden = !isSelected
+        }
+    }
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupLayout()
@@ -50,10 +56,6 @@ final class ColorCell: UICollectionViewCell {
     func configure(with color: String) {
         colorView.backgroundColor = UIColor(hex: color)
         selectedView.backgroundColor = UIColor(hex: color)?.withAlphaComponent(0.3)
-    }
-
-    func configure(isSelected: Bool) {
-        selectedView.isHidden = !isSelected
     }
 }
 

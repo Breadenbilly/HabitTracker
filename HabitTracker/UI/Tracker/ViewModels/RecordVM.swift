@@ -8,6 +8,6 @@
 import Foundation
 
 struct RecordVM {
-    let trackerID: Int
+    let trackerID: UUID
     let date: Date
 }

@@ -8,9 +8,9 @@
 import UIKit
 
 final class TrackerViewModel {
+    var currentFilter: TrackerFilter = .today
+}
 
-    }
-    
     
 
 
